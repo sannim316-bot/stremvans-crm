@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ComplianceDocument;
 use App\Models\Client;
+use App\Helpers\ActivityLogger;
 
 class ComplianceDocumentController extends Controller
 {
@@ -14,6 +15,15 @@ class ComplianceDocumentController extends Controller
 
         return view('compliance.index',
             compact('client','documents'));
+    }
+
+    public function all()
+    {
+        $documents = ComplianceDocument::with('client')
+                        ->latest()
+                        ->paginate(15);
+
+        return view('compliance.all', compact('documents'));
     }
 
     public function create(Request $request)
@@ -49,5 +59,45 @@ class ComplianceDocumentController extends Controller
         return redirect()
             ->route('compliance.index',$request->client_id)
             ->with('success','Document uploaded successfully.');
+    }
+
+    public function approve(ComplianceDocument $document)
+    {
+        $document->update(['status' => 'Approved']);
+
+        ActivityLogger::log(
+
+            'Approve',
+
+            'Compliance',
+
+            'Approved '.$document->document_type.
+            ' for '.$document->client->first_name
+
+        );
+
+        return redirect()
+            ->route('compliance.index',$document->client_id)
+            ->with('success','Document approved successfully.');
+    }
+
+    public function reject(ComplianceDocument $document)
+    {
+        $document->update(['status' => 'Rejected']);
+
+        ActivityLogger::log(
+
+            'Reject',
+
+            'Compliance',
+
+            'Rejected '.$document->document_type.
+            ' for '.$document->client->first_name
+
+        );
+
+        return redirect()
+            ->route('compliance.index',$document->client_id)
+            ->with('success','Document rejected.');
     }
 }

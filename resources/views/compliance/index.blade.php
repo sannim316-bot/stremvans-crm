@@ -65,11 +65,33 @@ Uploaded {{ $doc->created_at->diffForHumans() }}
 
 <a href="{{ asset('storage/'.$doc->file_path) }}"
 target="_blank"
-class="btn btn-outline-dark btn-sm w-100">
+class="btn btn-outline-dark btn-sm w-100 mb-2">
 
 View Document
 
 </a>
+
+@if($doc->status == 'Pending')
+
+<div class="d-flex gap-2">
+
+<form action="{{ route('compliance.approve',$doc->id) }}" method="POST" class="flex-fill">
+    @csrf
+    <button class="btn btn-success btn-sm w-100">
+        Approve
+    </button>
+</form>
+
+<form action="{{ route('compliance.reject',$doc->id) }}" method="POST" class="flex-fill">
+    @csrf
+    <button class="btn btn-danger btn-sm w-100">
+        Reject
+    </button>
+</form>
+
+</div>
+
+@endif
 
 </div>
 

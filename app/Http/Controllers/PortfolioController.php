@@ -9,6 +9,15 @@ use App\Helpers\ActivityLogger;
 
 class PortfolioController extends Controller
 {
+    public function all()
+    {
+        $portfolios = Portfolio::with('client')
+                        ->latest()
+                        ->paginate(15);
+
+        return view('portfolio.all', compact('portfolios'));
+    }
+
     public function create(Request $request)
     {
         $client = Client::findOrFail($request->client);

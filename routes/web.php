@@ -10,6 +10,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReportController;
 use App\Models\Client;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\AodFormController;
 
 Route::get('/', [AuthController::class, 'showLogin']);
 
@@ -20,23 +22,26 @@ Route::get('/dashboard',
     ->name('dashboard')
     ->middleware('auth');
 
-Route::resource('clients', ClientController::class)->middleware('auth');
+Route::get('/settings',
+    [SettingsController::class,'index'])
+    ->name('settings.index')
+    ->middleware('auth');
 
-Route::resource('portfolios', PortfolioController::class)->middleware('auth');
+Route::get('/aod-forms',
+    [AodFormController::class,'index'])
+    ->name('aod.index')
+    ->middleware('auth');
 
-Route::middleware('auth')->group(function(){
+// Relationship Officer + Admin: Clients, Portfolios, Transactions
+Route::middleware(['auth','role:admin,relationship_officer'])->group(function(){
 
-    Route::get('/clients/{client}/compliance',
-        [ComplianceDocumentController::class,'index'])
-        ->name('compliance.index');
+    Route::resource('clients', ClientController::class);
 
-    Route::get('/compliance/create',
-        [ComplianceDocumentController::class,'create'])
-        ->name('compliance.create');
+    Route::resource('portfolios', PortfolioController::class);
 
-    Route::post('/compliance',
-        [ComplianceDocumentController::class,'store'])
-        ->name('compliance.store');
+    Route::get('/portfolios-overview',
+        [PortfolioController::class,'all'])
+        ->name('portfolios.all');
 
     Route::get('/portfolios/{portfolio}/transactions',
         [TransactionController::class,'index'])
@@ -49,6 +54,40 @@ Route::middleware('auth')->group(function(){
     Route::post('/transactions',
         [TransactionController::class,'store'])
         ->name('transactions.store');
+
+});
+
+// Compliance Officer + Admin: Compliance
+Route::middleware(['auth','role:admin,compliance'])->group(function(){
+
+    Route::get('/clients/{client}/compliance',
+        [ComplianceDocumentController::class,'index'])
+        ->name('compliance.index');
+
+    Route::get('/compliance',
+        [ComplianceDocumentController::class,'all'])
+        ->name('compliance.all');
+
+    Route::get('/compliance/create',
+        [ComplianceDocumentController::class,'create'])
+        ->name('compliance.create');
+
+    Route::post('/compliance',
+        [ComplianceDocumentController::class,'store'])
+        ->name('compliance.store');
+
+    Route::post('/compliance/{document}/approve',
+        [ComplianceDocumentController::class,'approve'])
+        ->name('compliance.approve');
+
+    Route::post('/compliance/{document}/reject',
+        [ComplianceDocumentController::class,'reject'])
+        ->name('compliance.reject');
+
+});
+
+// Finance Officer + Admin: Reports
+Route::middleware(['auth','role:admin,finance'])->group(function(){
 
     Route::get('/reports',
         [ReportController::class,'index'])
@@ -64,6 +103,7 @@ Route::middleware('auth')->group(function(){
 
 });
 
+// Admin only: Activity Logs
 Route::middleware(['auth','role:admin'])->group(function () {
 
     Route::get('/activity-logs',

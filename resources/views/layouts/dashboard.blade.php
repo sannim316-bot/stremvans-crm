@@ -157,48 +157,69 @@
             <h5>STREMVANS CRM</h5>
         </div>
 
-        <div class="menu">
+       <div class="menu">
 
-            <a href="/dashboard" class="active">
-                <i class="bi bi-grid-fill"></i>
-                <span>Dashboard</span>
-            </a>
+    <a href="/dashboard" class="active">
+        <i class="bi bi-grid-fill"></i>
+        <span>Dashboard</span>
+    </a>
 
-            <a href="{{ route('clients.index') }}">
-    <i class="bi bi-people-fill"></i>
-    <span>Clients</span>
+    @if(in_array(auth()->user()->role, ['admin','relationship_officer']))
+
+    <a href="{{ route('clients.index') }}">
+        <i class="bi bi-people-fill"></i>
+        <span>Clients</span>
+    </a>
+
+    @endif
+
+    <a href="{{ route('aod.index') }}">
+    <i class="bi bi-folder-check"></i>
+    <span>AOD Forms</span>
 </a>
 
-            <a href="#">
-                <i class="bi bi-folder-check"></i>
-                <span>AOD Forms</span>
-            </a>
+    @if(in_array(auth()->user()->role, ['admin','relationship_officer']))
 
-            <a href="#">
-                <i class="bi bi-wallet2"></i>
-                <span>Portfolio</span>
-            </a>
-
-            <a href="#">
-                <i class="bi bi-shield-check"></i>
-                <span>Compliance</span>
-            </a>
-
-            <a href="{{ route('reports.index') }}">
-    <i class="bi bi-bar-chart-fill"></i>
-    <span>Reports</span>
-</a>
-           <a href="{{ route('activity.index') }}">
-    <i class="bi bi-clock-history"></i>
-    <span>Activity Logs</span>
+    <a href="{{ route('portfolios.all') }}">
+    <i class="bi bi-wallet2"></i>
+    <span>Portfolio</span>
 </a>
 
-<a href="#">
+    @endif
+
+    @if(in_array(auth()->user()->role, ['admin','compliance']))
+
+    <a href="{{ route('compliance.all') }}">
+        <i class="bi bi-shield-check"></i>
+        <span>Compliance</span>
+    </a>
+
+    @endif
+
+    @if(in_array(auth()->user()->role, ['admin','finance']))
+
+    <a href="{{ route('reports.index') }}">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Reports</span>
+    </a>
+
+    @endif
+
+    @if(auth()->user()->role == 'admin')
+
+    <a href="{{ route('activity.index') }}">
+        <i class="bi bi-clock-history"></i>
+        <span>Activity Logs</span>
+    </a>
+
+    @endif
+
+   <a href="{{ route('settings.index') }}">
     <i class="bi bi-gear-fill"></i>
     <span>Settings</span>
 </a>
 
-        </div>
+</div>
 
     </aside>
 
@@ -214,12 +235,12 @@
             <i class="bi bi-bell notification"></i>
 
             <div class="profile">
-                <div class="avatar">IT</div>
+                <div class="avatar">{{ strtoupper(substr(auth()->user()->name,0,1)) }}</div>
 
-                <div>
-                    <strong>IT Administrator</strong><br>
-                    <small>Administrator</small>
-                </div>
+<div>
+    <strong>{{ auth()->user()->name }}</strong><br>
+    <small>{{ ucfirst(str_replace('_',' ', auth()->user()->role)) }}</small>
+</div>
             </div>
 
         </div>
