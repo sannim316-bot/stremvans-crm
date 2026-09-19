@@ -59,6 +59,11 @@ class TransactionController extends Controller
             ' transaction of ₦'.number_format($request->amount,2)
 
         );
+        \App\Helpers\NotificationHelper::sendToAdmins(
+    'New Transaction Recorded',
+    'A '.$request->transaction_type.' transaction of ₦'.number_format($request->amount,2).' was recorded.',
+    'info'
+);
 
         return redirect()
             ->route('transactions.index',$request->portfolio_id)

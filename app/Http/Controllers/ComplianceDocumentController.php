@@ -55,6 +55,11 @@ class ComplianceDocumentController extends Controller
             'status'=>'Pending'
 
         ]);
+        \App\Helpers\NotificationHelper::sendToAdmins(
+    'New Compliance Document',
+    'A '.$request->document_type.' was uploaded and needs approval.',
+    'warning'
+);
 
         return redirect()
             ->route('compliance.index',$request->client_id)

@@ -72,6 +72,11 @@ class ClientController extends Controller
             'Created investor '.$client->first_name.' '.$client->last_name
 
         );
+        \App\Helpers\NotificationHelper::sendToAdmins(
+    'New Client Registered',
+    $client->first_name.' '.$client->last_name.' was added as a new investor.',
+    'success'
+);
 
         return redirect()
                 ->route('clients.create')

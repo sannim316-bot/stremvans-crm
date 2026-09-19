@@ -15,6 +15,11 @@ class Portfolio extends Model
         'nav_price',
         'investment_date',
         'status',
+
+        'maturity_date',
+        'custodian_bank',
+        'custodian_account_name',
+        'current_nav_price',
     ];
 
     public function client()
@@ -22,8 +27,8 @@ class Portfolio extends Model
         return $this->belongsTo(Client::class);
     }
 
-public function transactions()
-{
-    return $this->hasMany(Transaction::class);
-}
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
 }
