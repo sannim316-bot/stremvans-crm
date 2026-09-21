@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Helpers\ActivityLogger;
 
 class ClientController extends Controller
@@ -25,43 +27,86 @@ class ClientController extends Controller
 
     public function create()
     {
-        return view('clients.create');
+        $relationshipManagers = User::where('status', 'active')
+            ->whereIn('role', ['relationship_officer', 'admin'])
+            ->orderBy('name')
+            ->get();
+
+        return view('clients.create', compact('relationshipManagers'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
 
-            'first_name' => 'required',
-            'last_name' => 'required',
-            'email' => 'required|email|unique:clients',
-            'phone' => 'required',
-            'client_code' => 'required|unique:clients'
+            // Personal
+            'first_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
+
+            'email' => 'required|email|max:255|unique:clients',
+            'phone' => 'required|string|max:30',
+
+            'date_of_birth' => 'nullable|date|before:today',
+            'gender' => 'nullable|in:Male,Female',
+            'nationality' => 'nullable|string|max:100',
+
+            'residential_address' => 'nullable|string|max:1000',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'country' => 'nullable|string|max:100',
+
+            'occupation' => 'nullable|string|max:255',
+            'employer' => 'nullable|string|max:255',
+
+            // Investor Profile
+            'client_category' =>
+                'required|in:Retail,HNI,Corporate,Institutional',
+
+            'risk_profile' =>
+                'nullable|in:Conservative,Moderate,Aggressive',
+
+            'investment_objective' =>
+                'nullable|in:Capital Preservation,Income,Growth,Income and Growth',
+
+            'relationship_manager_id' =>
+                'nullable|exists:users,id',
+
+            // Bank
+            'bank_name' => 'nullable|string|max:255',
+
+            'account_number' =>
+                'nullable|digits:10',
+
+            'account_name' =>
+                'nullable|string|max:255',
+
+            'bvn' =>
+                'nullable|digits:11',
+
+            // Next of Kin
+            'next_of_kin_name' =>
+                'nullable|string|max:255',
+
+            'next_of_kin_relationship' =>
+                'nullable|string|max:100',
+
+            'next_of_kin_phone' =>
+                'nullable|string|max:30',
+
+            'next_of_kin_email' =>
+                'nullable|email|max:255',
+
+            'next_of_kin_address' =>
+                'nullable|string|max:1000',
 
         ]);
 
-        $client = Client::create([
+        $validated['kyc_status'] = 'Pending';
+        $validated['bank_verified'] = false;
+        $validated['client_code'] = 'STM-' . strtoupper(Str::random(8));
 
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'other_name' => $request->other_name,
-
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'date_of_birth' => $request->date_of_birth,
-            'gender' => $request->gender,
-
-            'client_code' => $request->client_code,
-            'investment_type' => $request->investment_type,
-            'investment_amount' => $request->investment_amount,
-
-            'kyc_status' => $request->kyc_status,
-
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-
-        ]);
+        $client = Client::create($validated);
 
         ActivityLogger::log(
 
@@ -69,18 +114,20 @@ class ClientController extends Controller
 
             'Clients',
 
-            'Created investor '.$client->first_name.' '.$client->last_name
+            'Created investor '.$client->first_name.' '.$client->last_name.
+            ' ('.$client->client_code.')'
 
         );
+
         \App\Helpers\NotificationHelper::sendToAdmins(
-    'New Client Registered',
-    $client->first_name.' '.$client->last_name.' was added as a new investor.',
-    'success'
-);
+            'New Client Registered',
+            $client->first_name.' '.$client->last_name.' was added as a new investor.',
+            'success'
+        );
 
         return redirect()
-                ->route('clients.create')
-                ->with('success','Client created successfully.');
+                ->route('clients.show', $client)
+                ->with('success','Investor created successfully.');
     }
 
     public function show(Client $client)
