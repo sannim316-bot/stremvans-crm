@@ -12,6 +12,8 @@ use App\Models\Client;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\AodFormController;
+use App\Http\Controllers\ClientNoteController;
+use App\Http\Controllers\BankVerificationController;
 
 Route::get('/', [AuthController::class, 'showLogin']);
 
@@ -76,11 +78,11 @@ Route::middleware(['auth','role:admin,compliance'])->group(function(){
         [ComplianceDocumentController::class,'store'])
         ->name('compliance.store');
 
-    Route::post('/compliance/{document}/approve',
+    Route::patch('/compliance/{document}/approve',
         [ComplianceDocumentController::class,'approve'])
         ->name('compliance.approve');
 
-    Route::post('/compliance/{document}/reject',
+    Route::patch('/compliance/{document}/reject',
         [ComplianceDocumentController::class,'reject'])
         ->name('compliance.reject');
 
@@ -109,6 +111,34 @@ Route::middleware(['auth','role:admin'])->group(function () {
     Route::get('/activity-logs',
         [ActivityLogController::class,'index'])
         ->name('activity.index');
+
+});
+
+Route::middleware([
+    'auth',
+    'role:admin,relationship_officer'
+])->group(function () {
+
+    Route::post(
+        '/clients/{client}/notes',
+        [ClientNoteController::class, 'store']
+    )->name('clients.notes.store');
+
+    Route::delete(
+        '/client-notes/{note}',
+        [ClientNoteController::class, 'destroy']
+    )->name('clients.notes.destroy');
+
+});
+Route::middleware([
+    'auth',
+    'role:admin,relationship_officer'
+])->group(function () {
+
+    Route::post(
+        '/clients/{client}/verify-bank',
+        [BankVerificationController::class, 'verify']
+    )->name('clients.bank.verify');
 
 });
 

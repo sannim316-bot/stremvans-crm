@@ -1,19 +1,12 @@
 <?php
 
 return [
-
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
-    */
-
+'dojah' => [
+    'app_id' => env('DOJAH_APP_ID'),
+    'secret_key' => env('DOJAH_SECRET_KEY'),
+    'base_url' => env('DOJAH_BASE_URL', 'https://api.dojah.io/api/v1/general/account?'),
+],
+    
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),

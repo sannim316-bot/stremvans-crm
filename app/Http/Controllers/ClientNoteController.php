@@ -2,84 +2,55 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\ClientNote;
+use App\Helpers\ActivityLogger;
 use Illuminate\Http\Request;
 
 class ClientNoteController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function store(Request $request, Client $client)
     {
-        //
+        $validated = $request->validate([
+            'interaction_type' => 'required|in:Phone Call,Office Meeting,Virtual Meeting,Email,WhatsApp,Other',
+            'interaction_date' => 'required|date',
+            'note' => 'required|string|max:5000',
+            'follow_up_date' => 'nullable|date|after_or_equal:interaction_date',
+        ]);
+
+        $validated['client_id'] = $client->id;
+        $validated['user_id'] = auth()->id();
+
+        $note = ClientNote::create($validated);
+
+        ActivityLogger::log(
+            'Create',
+            'Client Notes',
+            'Added '.$note->interaction_type.
+            ' note for '.$client->first_name.' '.$client->last_name
+        );
+
+        return redirect()
+            ->route('clients.show', $client)
+            ->with('success', 'Client note added successfully.');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function destroy(ClientNote $note)
     {
-        //
-    }
+        $client = $note->client;
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\ClientNote  $clientNote
-     * @return \Illuminate\Http\Response
-     */
-    public function show(ClientNote $clientNote)
-    {
-        //
-    }
+        ActivityLogger::log(
+            'Delete',
+            'Client Notes',
+            'Deleted relationship note for '.
+            $client->first_name.' '.$client->last_name
+        );
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\ClientNote  $clientNote
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(ClientNote $clientNote)
-    {
-        //
-    }
+        $note->delete();
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\ClientNote  $clientNote
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, ClientNote $clientNote)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\ClientNote  $clientNote
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(ClientNote $clientNote)
-    {
-        //
+        return redirect()
+            ->route('clients.show', $client)
+            ->with('success', 'Client note deleted.');
     }
 }

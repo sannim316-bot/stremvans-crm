@@ -77,6 +77,7 @@ View Document
 
 <form action="{{ route('compliance.approve',$doc->id) }}" method="POST" class="flex-fill">
     @csrf
+    @method('PATCH')
     <button class="btn btn-success btn-sm w-100">
         Approve
     </button>
@@ -84,6 +85,7 @@ View Document
 
 <form action="{{ route('compliance.reject',$doc->id) }}" method="POST" class="flex-fill">
     @csrf
+    @method('PATCH')
     <button class="btn btn-danger btn-sm w-100">
         Reject
     </button>

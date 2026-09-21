@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Portfolio;
 use App\Models\Transaction;
 use App\Models\ComplianceDocument;
+use App\Models\ClientNote;
 
 class DashboardController extends Controller
 {
@@ -42,6 +43,21 @@ class DashboardController extends Controller
                                 ->with('portfolio.client')
                                 ->get();
 
+        $upcomingFollowUps = ClientNote::with(['client', 'user'])
+            ->whereNotNull('follow_up_date')
+            ->where('follow_up_date', '>=', now())
+
+            ->when(
+                auth()->user()->role === 'relationship_officer',
+                function ($query) {
+                    $query->where('user_id', auth()->id());
+                }
+            )
+
+            ->orderBy('follow_up_date')
+            ->take(5)
+            ->get();
+
         return view('dashboard.index', compact(
             'totalClients',
             'activeInvestments',
@@ -49,7 +65,8 @@ class DashboardController extends Controller
             'pendingKYC',
             'monthlyInvestments',
             'completionRate',
-            'recentTransactions'
+            'recentTransactions',
+            'upcomingFollowUps'
         ));
     }
 }

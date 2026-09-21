@@ -141,6 +141,111 @@
 </div>
 
 </div>
+
+<div class="card-ui mt-4">
+
+    <div class="d-flex justify-content-between mb-4">
+
+        <div>
+            <h5 class="mb-1">
+                Upcoming Client Follow-ups
+            </h5>
+
+            <small class="text-muted">
+                Relationship management reminders
+            </small>
+        </div>
+
+    </div>
+
+    <div class="table-responsive">
+
+        <table class="table table-ui align-middle">
+
+            <thead>
+
+                <tr>
+                    <th>Investor</th>
+                    <th>Type</th>
+                    <th>Follow-up</th>
+                    <th>Officer</th>
+                    <th></th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @forelse($upcomingFollowUps as $followUp)
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ $followUp->client->first_name }}
+                                {{ $followUp->client->last_name }}
+                            </strong>
+
+                            <br>
+
+                            <small class="text-muted">
+                                {{ $followUp->client->client_code }}
+                            </small>
+                        </td>
+
+                        <td>
+                            {{ $followUp->interaction_type }}
+                        </td>
+
+                        <td>
+                            {{ \Carbon\Carbon::parse(
+                                $followUp->follow_up_date
+                            )->format('d M Y, h:i A') }}
+                        </td>
+
+                        <td>
+                            {{ optional($followUp->user)->name ?? '—' }}
+                        </td>
+
+                        <td>
+
+                            <a href="{{ route(
+                                'clients.show',
+                                $followUp->client
+                            ) }}"
+                               class="btn btn-sm btn-outline-dark">
+
+                                View Client
+
+                            </a>
+
+                        </td>
+
+                    </tr>
+
+                @empty
+
+                    <tr>
+
+                        <td colspan="5"
+                            class="text-center text-muted py-4">
+
+                            No upcoming follow-ups.
+
+                        </td>
+
+                    </tr>
+
+                @endforelse
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
 <x-table-card>
 
 <h5>Recent Transactions</h5>

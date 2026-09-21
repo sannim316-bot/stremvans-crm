@@ -39,7 +39,6 @@ class ClientController extends Controller
     {
         $validated = $request->validate([
 
-            // Personal
             'first_name' => 'required|string|max:255',
             'middle_name' => 'nullable|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -59,7 +58,6 @@ class ClientController extends Controller
             'occupation' => 'nullable|string|max:255',
             'employer' => 'nullable|string|max:255',
 
-            // Investor Profile
             'client_category' =>
                 'required|in:Retail,HNI,Corporate,Institutional',
 
@@ -72,7 +70,6 @@ class ClientController extends Controller
             'relationship_manager_id' =>
                 'nullable|exists:users,id',
 
-            // Bank
             'bank_name' => 'nullable|string|max:255',
 
             'account_number' =>
@@ -84,7 +81,6 @@ class ClientController extends Controller
             'bvn' =>
                 'nullable|digits:11',
 
-            // Next of Kin
             'next_of_kin_name' =>
                 'nullable|string|max:255',
 
@@ -132,9 +128,43 @@ class ClientController extends Controller
 
     public function show(Client $client)
     {
-        $client->load('portfolios');
+       $client->load([
+    'relationshipManager',
+    'kycApprovedBy',
+    'complianceDocuments.reviewer',
+    'portfolios.transactions',
+    'notes.user',
+]);
+        $totalInvested = $client->portfolios->sum('amount_invested');
 
-        return view('clients.show', compact('client'));
+        $totalUnits = $client->portfolios->sum(function ($portfolio) {
+            return $portfolio->units;
+        });
+
+        $currentValue = $client->portfolios->sum(function ($portfolio) {
+
+            $nav = $portfolio->current_nav_price
+                ?? $portfolio->nav_price
+                ?? 0;
+
+            return $portfolio->units * $nav;
+        });
+
+        $gainLoss = $currentValue - $totalInvested;
+
+        $transactionCount = $client->portfolios
+            ->sum(function ($portfolio) {
+                return $portfolio->transactions->count();
+            });
+
+        return view('clients.show', compact(
+            'client',
+            'totalInvested',
+            'totalUnits',
+            'currentValue',
+            'gainLoss',
+            'transactionCount'
+        ));
     }
 
     public function edit(Client $client)
