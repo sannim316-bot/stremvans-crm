@@ -132,25 +132,44 @@ class ClientController extends Controller
     'relationshipManager',
     'kycApprovedBy',
     'complianceDocuments.reviewer',
+    'portfolios.fund',
     'portfolios.transactions',
     'notes.user',
 ]);
-        $totalInvested = $client->portfolios->sum('amount_invested');
 
-        $totalUnits = $client->portfolios->sum(function ($portfolio) {
-            return $portfolio->units;
-        });
+        $totalInvested = $client->portfolios
+            ->sum(function ($portfolio) {
 
-        $currentValue = $client->portfolios->sum(function ($portfolio) {
+                return $portfolio
+                    ->transactions
+                    ->where('transaction_type', 'Buy')
+                    ->sum('amount');
 
-            $nav = $portfolio->current_nav_price
-                ?? $portfolio->nav_price
-                ?? 0;
+            });
 
-            return $portfolio->units * $nav;
-        });
+        $totalUnits = $client->portfolios
+            ->sum(function ($portfolio) {
 
-        $gainLoss = $currentValue - $totalInvested;
+                return $portfolio->current_units;
+
+            });
+
+        $currentValue = $client->portfolios
+            ->sum(function ($portfolio) {
+
+                return $portfolio->current_value;
+
+            });
+
+        $netContributions = $client->portfolios
+            ->sum(function ($portfolio) {
+
+                return $portfolio->net_contributions;
+
+            });
+
+        $gainLoss =
+            $currentValue - $netContributions;
 
         $transactionCount = $client->portfolios
             ->sum(function ($portfolio) {
@@ -163,6 +182,7 @@ class ClientController extends Controller
             'totalUnits',
             'currentValue',
             'gainLoss',
+            'netContributions',
             'transactionCount'
         ));
     }

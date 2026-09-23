@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Transaction;
 use App\Models\Portfolio;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use App\Models\Transaction;
 use App\Helpers\ActivityLogger;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
 {
@@ -24,49 +26,130 @@ class TransactionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
+            'portfolio_id' => 'required|exists:portfolios,id',
 
-            'portfolio_id'=>'required',
-            'transaction_type'=>'required',
-            'amount'=>'required|numeric',
-            'units'=>'required|numeric',
-            'nav_price'=>'required|numeric',
-            'transaction_date'=>'required|date'
+            'transaction_type' =>
+                'required|in:Buy,Redeem,Dividend,Bonus Units',
 
+            'amount' => 'required|numeric|min:0',
+
+            'units' => 'required|numeric|min:0',
+
+            'nav_price' => 'required|numeric|min:0',
+
+            'transaction_date' => 'required|date',
+
+            'remarks' => 'nullable|string|max:2000',
         ]);
 
-        Transaction::create([
+        $portfolio = Portfolio::with('transactions')
+            ->findOrFail($validated['portfolio_id']);
 
-            'portfolio_id'=>$request->portfolio_id,
-            'transaction_type'=>$request->transaction_type,
-            'amount'=>$request->amount,
-            'units'=>$request->units,
-            'nav_price'=>$request->nav_price,
-            'transaction_date'=>$request->transaction_date,
-            'remarks'=>$request->remarks,
+        if (
+            in_array(
+                $validated['transaction_type'],
+                ['Buy', 'Redeem', 'Bonus Units']
+            )
+            && $validated['units'] <= 0
+        ) {
+            throw ValidationException::withMessages([
+                'units' => 'Units must be greater than zero for this transaction.',
+            ]);
+        }
 
-            'reference'=>'STM-'.Str::upper(Str::random(10))
+        if ($validated['transaction_type'] === 'Redeem') {
 
-        ]);
+            if ($validated['units'] > $portfolio->current_units) {
 
-        ActivityLogger::log(
+                throw ValidationException::withMessages([
+                    'units' =>
+                        'Redemption exceeds available units. ' .
+                        'Current available units: ' .
+                        number_format($portfolio->current_units, 4),
+                ]);
+            }
+        }
 
-            'Create',
+        if ($validated['transaction_type'] === 'Dividend') {
+            $validated['units'] = 0;
+        }
 
-            'Transactions',
+        if (
+            in_array(
+                $validated['transaction_type'],
+                ['Buy', 'Redeem']
+            )
+        ) {
 
-            'Recorded '.$request->transaction_type.
-            ' transaction of ₦'.number_format($request->amount,2)
+            $validated['amount'] =
+                round(
+                    $validated['units'] *
+                    $validated['nav_price'],
+                    2
+                );
+        }
 
-        );
-        \App\Helpers\NotificationHelper::sendToAdmins(
-    'New Transaction Recorded',
-    'A '.$request->transaction_type.' transaction of ₦'.number_format($request->amount,2).' was recorded.',
-    'info'
-);
+        if ($validated['transaction_type'] === 'Bonus Units') {
+
+            $validated['amount'] = 0;
+        }
+
+        DB::transaction(function () use (
+            $validated,
+            $portfolio
+        ) {
+
+            $transaction = Transaction::create([
+                'portfolio_id' => $portfolio->id,
+
+                'transaction_type' =>
+                    $validated['transaction_type'],
+
+                'amount' =>
+                    $validated['amount'],
+
+                'units' =>
+                    $validated['units'],
+
+                'nav_price' =>
+                    $validated['nav_price'],
+
+                'transaction_date' =>
+                    $validated['transaction_date'],
+
+                'remarks' =>
+                    $validated['remarks'] ?? null,
+
+                'reference' =>
+                    'STM-' . Str::upper(Str::random(10)),
+            ]);
+
+            ActivityLogger::log(
+                'Create',
+                'Transactions',
+                'Recorded ' .
+                $transaction->transaction_type .
+                ' transaction ' .
+                $transaction->reference .
+                ' for ' .
+                $portfolio->client->first_name .
+                ' ' .
+                $portfolio->client->last_name
+            );
+
+            \App\Helpers\NotificationHelper::sendToAdmins(
+                'New Transaction Recorded',
+                'A '.$transaction->transaction_type.' transaction of ₦'.number_format($transaction->amount,2).' was recorded.',
+                'info'
+            );
+        });
 
         return redirect()
-            ->route('transactions.index',$request->portfolio_id)
-            ->with('success','Transaction saved successfully.');
+            ->route('transactions.index', $portfolio)
+            ->with(
+                'success',
+                'Transaction recorded successfully.'
+            );
     }
 }

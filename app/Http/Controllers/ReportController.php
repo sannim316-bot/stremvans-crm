@@ -14,8 +14,14 @@ class ReportController extends Controller
     {
         $clients = Client::count();
 
-        $aum = Transaction::where('transaction_type','Buy')->sum('amount')
-              - Transaction::where('transaction_type','Redeem')->sum('amount');
+        $aum = Portfolio::with('transactions')
+            ->where('status', 'Active')
+            ->get()
+            ->sum(function ($portfolio) {
+
+                return $portfolio->current_value;
+
+            });
 
         $transactions = Transaction::count();
 

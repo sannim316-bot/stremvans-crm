@@ -5,13 +5,21 @@
 
 @section('content')
 
-<div class="card border-0 rounded-4 shadow-sm">
-
-<div class="card-body p-4">
+<div class="card-ui">
 
 <h4 class="mb-4">
 Assign Investment
 </h4>
+
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 
 <form action="{{ route('portfolios.store') }}" method="POST">
 
@@ -19,37 +27,39 @@ Assign Investment
 
 <input type="hidden"
        name="client_id"
-       value="{{ request('client') }}">
+       value="{{ $client->id }}">
 
 <div class="row">
 
 <div class="col-md-6 mb-3">
 
-<label>Fund Name</label>
+    <label class="form-label">
+        Investment Fund
+    </label>
 
-<input
-type="text"
-name="fund_name"
-class="form-control"
-placeholder="Stremvans Equity Growth Fund"
-required>
+    <select
+        name="fund_id"
+        class="form-select"
+        required>
 
-</div>
+        <option value="">
+            Select fund
+        </option>
 
-<div class="col-md-6 mb-3">
+        @foreach($funds as $fund)
 
-<label>Investment Type</label>
+            <option value="{{ $fund->id }}">
 
-<select
-name="investment_type"
-class="form-select">
+                {{ $fund->name }}
+                —
+                {{ $fund->currency }}
+                {{ number_format($fund->current_nav, 4) }}
 
-<option>Mutual Fund</option>
-<option>Fixed Income</option>
-<option>Equity Fund</option>
-<option>Dollar Fund</option>
+            </option>
 
-</select>
+        @endforeach
+
+    </select>
 
 </div>
 
@@ -59,33 +69,8 @@ class="form-select">
 
 <input
 type="number"
-name="amount_invested"
-class="form-control"
-required>
-
-</div>
-
-<div class="col-md-6 mb-3">
-
-<label>Units Purchased</label>
-
-<input
-type="number"
-step="0.0001"
-name="units"
-class="form-control"
-required>
-
-</div>
-
-<div class="col-md-6 mb-3">
-
-<label>NAV Price</label>
-
-<input
-type="number"
 step="0.01"
-name="nav_price"
+name="amount_invested"
 class="form-control"
 required>
 
@@ -112,8 +97,6 @@ Save Investment
 </button>
 
 </form>
-
-</div>
 
 </div>
 

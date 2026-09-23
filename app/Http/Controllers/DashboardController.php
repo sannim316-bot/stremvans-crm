@@ -16,8 +16,15 @@ class DashboardController extends Controller
 
         $activeInvestments = Portfolio::where('status','Active')->count();
 
-        $aum = Transaction::where('transaction_type','Buy')->sum('amount')
-             - Transaction::where('transaction_type','Redeem')->sum('amount');
+        $portfolios = Portfolio::with('transactions')
+            ->where('status', 'Active')
+            ->get();
+
+        $aum = $portfolios->sum(function ($portfolio) {
+
+            return $portfolio->current_value;
+
+        });
 
         $pendingKYC = ComplianceDocument::where('status','Pending')->count();
 

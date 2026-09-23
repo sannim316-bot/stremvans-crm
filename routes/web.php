@@ -14,6 +14,7 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\AodFormController;
 use App\Http\Controllers\ClientNoteController;
 use App\Http\Controllers\BankVerificationController;
+use App\Http\Controllers\FundController;
 
 Route::get('/', [AuthController::class, 'showLogin']);
 
@@ -141,5 +142,18 @@ Route::middleware([
     )->name('clients.bank.verify');
 
 });
+Route::middleware([
+    'auth',
+    'role:admin,finance'
+])->group(function () {
 
+    Route::resource('funds', FundController::class)
+        ->except(['show']);
+
+    Route::post(
+        '/funds/{fund}/nav',
+        [FundController::class, 'updateNav']
+    )->name('funds.nav.update');
+
+});
 Route::post('/logout', [AuthController::class, 'logout']);

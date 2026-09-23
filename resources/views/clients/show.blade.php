@@ -438,6 +438,8 @@
 
 </div>
 
+
+
 <div class="tab-pane fade" id="portfolio">
 
     <div class="card-ui">
@@ -463,9 +465,9 @@
                     <tr>
                         <th>Fund</th>
                         <th>Type</th>
-                        <th>Invested</th>
                         <th>Units</th>
                         <th>NAV</th>
+                        <th>Current Value</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
@@ -482,19 +484,26 @@
                         <td>{{ $portfolio->investment_type }}</td>
 
                         <td>
-                            ₦{{ number_format($portfolio->amount_invested, 2) }}
-                        </td>
-
-                        <td>
-                            {{ number_format($portfolio->units, 4) }}
+                            {{ number_format(
+                                $portfolio->current_units,
+                                4
+                            ) }}
                         </td>
 
                         <td>
                             ₦{{ number_format(
-                                $portfolio->current_nav_price
-                                ?? $portfolio->nav_price,
+                                $portfolio->current_nav,
                                 4
                             ) }}
+                        </td>
+
+                        <td>
+                            <strong>
+                                ₦{{ number_format(
+                                    $portfolio->current_value,
+                                    2
+                                ) }}
+                            </strong>
                         </td>
 
                         <td>{{ $portfolio->status }}</td>
