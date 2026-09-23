@@ -204,7 +204,14 @@
     </a>
 
     @endif
+@if(in_array(auth()->user()->role, ['admin', 'finance']))
 
+<a href="{{ route('funds.index') }}">
+    <i class="bi bi-graph-up-arrow"></i>
+    <span>Fund Management</span>
+</a>
+
+@endif
     @if(auth()->user()->role == 'admin')
 
     <a href="{{ route('activity.index') }}">

@@ -148,7 +148,11 @@ Route::middleware([
 ])->group(function () {
 
     Route::resource('funds', FundController::class)
-        ->except(['show']);
+    ->only([
+        'index',
+        'create',
+        'store'
+    ]);
 
     Route::post(
         '/funds/{fund}/nav',
